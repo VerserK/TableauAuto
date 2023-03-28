@@ -1,5 +1,6 @@
 <?php
 session_start ();
+echo "test upload";
 
 require_once 'connect.php';
 
