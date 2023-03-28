@@ -32,6 +32,8 @@ require_once "connect.php";
   <link rel="stylesheet" href="plugins/summernote/summernote-bs4.min.css">
   <!-- SweetAlert2 -->
   <link rel="stylesheet" href="plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+  <!-- Toastr -->
+  <link rel="stylesheet" href="plugins/toastr/toastr.min.css">
   <!-- DataTables -->
   <link rel="stylesheet" href="plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
   <link rel="stylesheet" href="plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
@@ -204,6 +206,9 @@ require_once "connect.php";
             document.addRow.action='testSend.php';
             document.addRow.target='iframe_target';
             document.createElement('form').submit.call(document.addRow);
+            setTimeout(function() {
+                  $('#modal-check-test').modal('hide');
+              }, 8000);
           }
       }
       function fncAction2()
@@ -275,7 +280,7 @@ require_once "connect.php";
                       </div>
 
                       <div class="form-group">
-                        <label for="exampleInputBorder">ID</label>
+                        <label for="exampleInputBorder">Dashboard ID</label>
                         <a href="#" class="btn btn-block btn-outline-info" data-toggle="modal" data-target="#modal-default" onclick="upload()">ID Viewer</a>
                         <input type="text" class="form-control form-control-border" id="mail_id" name="mail_idz" value="<?php echo $resultedit['ID']; ?>" autocomplete="off">
                       </div>
@@ -307,11 +312,14 @@ require_once "connect.php";
                         <label for="exampleInputBorder">Time</label>
                         <!--- somewhere within <body> -->
                           <div class="example7"></div>
-                          <input class="example7-input form-control form-control-border" id="mail_corn" name="mail_cornz" value="<?php echo $resultedit['CRON']; ?>" />
+                          <input class="example7-input form-control form-control-border" id="mail_corn" name="mail_cornz" value="<?php echo $resultedit['CRON']; ?>" readonly/>
                       </div>
 
                       <div class="form-group">
                         <label for="exampleInputBorder">FROM</label>
+                        <i class="fa fa-info-circle" style="color:blue" aria-hidden="true" data-html="true" data-toggle="tooltip" data-placement="top" title="รูปแบบการตั้ง Email<br>
+                        'ชื่อที่ต้องการส่ง'<อีเมล@kubota.com> <br>
+                        โดยจะต้องทำการขอสิทธิ์ในการใช้งานอีเมลจากผู้ดูแลระบบก่อนเพื่อที่จะสามารถส่งในนามดังกล่าว"></i>
                         <input type="text" class="form-control form-control-border" id="mail_from" name="mail_from" value='<?=$resultedit['from']?>' autocomplete="off" ></input>
                       </div>
 
@@ -327,29 +335,35 @@ require_once "connect.php";
                         <?php 
                           $sql1 = "SELECT *FROM [dbo].[allemployee] WHERE ISNULL([email],'') != '' ORDER BY eid";
                           $result1 = sqlsrv_query($conn, $sql1);
+                          $sqlMail = "SELECT * FROM [dbo].[othermail] WHERE [MailGroup] = '".$resultedit['MailGroup']."'";
+                          $resultMail = sqlsrv_query($conn, $sqlMail);
                         ?>
                         <div class="select2-purple">
                           <select class="select2" multiple="multiple" data-dropdown-css-class="select2-purple" data-placeholder="Select a To" style="width: 100%;" name="mail_mailto[]" id="mail_mailto">
                             <?php while ($row1 = sqlsrv_fetch_array($result1, SQLSRV_FETCH_ASSOC)) {?>
-                            <option 
-                              value="<?php echo $row1["email"]; ?>"
-                              <?php if (In_array($row1["email"],$mailto_value)) echo 'selected' ; ?>
+                            <option value="<?php echo $row1["email"]; ?>"
+                              <?php if (In_array($row1["email"],$mailto_value)){ echo 'selected'; }?>
                             >
                             <?php echo $row1["nameEN"]. " " . $row1["lastnameEN"]; ?>
-                            </option>
+                          <?php } ?>
+                          <?php while ($rowmail = sqlsrv_fetch_array($resultMail, SQLSRV_FETCH_ASSOC)) {?>
+                            <option value="<?php echo $rowmail["mail"]; ?>" selected >
+                            <?php echo $rowmail["mail"]; ?>
                           <?php } ?>
                           </select>
                         </div>  
                       </div>
-
+                              
                       <div class="form-group">
                         <label>CC</label>
                         <?php 
                           $sql2 = "SELECT *FROM [dbo].[allemployee] WHERE ISNULL([email],'') != '' ORDER BY eid";
-                          $result2 = sqlsrv_query($conn, $sql2); 
+                          $result2 = sqlsrv_query($conn, $sql2);
+                          $sqlMail2 = "SELECT * FROM [dbo].[othermailCC] WHERE [MailGroup] = '".$resultedit['MailGroup']."'";
+                          $resultMail2 = sqlsrv_query($conn, $sqlMail2);
                         ?>
                         <div class="select2-purple">
-                          <select class="select2" multiple="multiple" data-dropdown-css-class="select2-purple" data-placeholder="Select a CC" style="width: 100%;" name="mail_mailcc[]">
+                          <select class="select2" multiple="multiple" data-dropdown-css-class="select2-purple" data-placeholder="Select a CC" style="width: 100%;" name="mail_mailcc[]" id="mail_mailcc">
                             <?php while ($row2 = sqlsrv_fetch_array($result2, SQLSRV_FETCH_ASSOC)) {?>
                               <option 
                               value="<?php echo $row2["email"]; ?>"
@@ -357,6 +371,10 @@ require_once "connect.php";
                             >
                             <?php echo $row2["nameEN"]. " " . $row2["lastnameEN"]; ?>
                             </option>
+                          <?php } ?>
+                          <?php while ($rowmail2 = sqlsrv_fetch_array($resultMail2, SQLSRV_FETCH_ASSOC)) {?>
+                            <option value="<?php echo $rowmail2["mail"]; ?>" selected >
+                            <?php echo $rowmail2["mail"]; ?>
                           <?php } ?>
                           </select>
                         </div>
@@ -367,9 +385,11 @@ require_once "connect.php";
                         <?php 
                           $sql3 = "SELECT *FROM [dbo].[allemployee] WHERE ISNULL([email],'') != '' ORDER BY eid";
                           $result3 = sqlsrv_query($conn, $sql3);
+                          $sqlMail3 = "SELECT * FROM [dbo].[othermailBCC] WHERE [MailGroup] = '".$resultedit['MailGroup']."'";
+                          $resultMail3 = sqlsrv_query($conn, $sqlMail3);
                         ?>
                         <div class="select2-purple">
-                          <select class="select2" multiple="multiple" data-dropdown-css-class="select2-purple" data-placeholder="Select a BCC" style="width: 100%;" name="mail_mailbcc[]">
+                          <select class="select2" multiple="multiple" data-dropdown-css-class="select2-purple" data-placeholder="Select a BCC" style="width: 100%;" name="mail_mailbcc[]" id="mail_mailbcc">
                             <?php while ($row3 = sqlsrv_fetch_array($result3, SQLSRV_FETCH_ASSOC)) {?>
                               <option 
                               value="<?php echo $row3["email"]; ?>"
@@ -377,6 +397,10 @@ require_once "connect.php";
                             >
                             <?php echo $row3["nameEN"]. " " . $row3["lastnameEN"]; ?>
                             </option>
+                          <?php } ?>
+                          <?php while ($rowmail3 = sqlsrv_fetch_array($resultMail3, SQLSRV_FETCH_ASSOC)) {?>
+                            <option value="<?php echo $rowmail3["mail"]; ?>" selected >
+                            <?php echo $rowmail3["mail"]; ?>
                           <?php } ?>
                           </select>
                         </div>
@@ -407,8 +431,10 @@ require_once "connect.php";
                         
                     </div>
                     <div class="col-md-6 text-right">
-                      <button id="testbtn" type="button" class="btn btn-block btn-outline-warning" onclick="fncAction1()" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order">Test Send</button>
+                      <button id="testModel" type="button" class="btn btn-block btn-outline-warning" data-toggle="modal" data-target="#modal-check-test" onclick="addMailModel()">Preview and Sending</button>
+                      <!--<button id="testbtn" type="button" class="btn btn-block btn-outline-warning" onclick="fncAction1()" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order">Test Send</button>-->
                       <button type="button" class="btn btn-block btn-outline-primary" onclick="fncAction2()">Update</button>
+                      <a class="btn btn-block btn-outline-danger" data-val="<?php echo $resultedit['no'] ?>" href='#' data-toggle='modal' data-target='#modal-delete'>Delete</a>
                     </div>
                   </div>
                 </div>
@@ -445,7 +471,8 @@ require_once "connect.php";
                 </thead>
                 <tbody>
                 <?php
-                    $sqlapi = "SELECT * FROM idviewer";
+                    $sqlapi = "SELECT [workbook],[owner],[project],[tags],[location],[idviewer].[id],[idviewer].[name],[contentUrl],[createdAt],[updatedAt],[viewUrlName] 
+                    FROM idviewer INNER JOIN tableau_alluser ON idviewer.[owner] = tableau_alluser.id WHERE tableau_alluser.email ='$_SESSION[email]'";
                     $resultapi = sqlsrv_query($conn, $sqlapi);
                   echo '<tr>';
                   while ($rowapi = sqlsrv_fetch_array($resultapi, SQLSRV_FETCH_ASSOC)) {
@@ -475,9 +502,57 @@ require_once "connect.php";
         <!-- /.modal-dialog -->
       </div>
       <!-- /.modal -->
+      
+      <div class="modal fade" id="modal-check-test">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Verify that the recipient's name is correct?</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>to :</p> 
+              <p id="demo"></p>
+              <p>CC :</p> 
+              <p id="demoCC"></p>
+              <p>BCC :</p> 
+              <p id="demoBCC"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+              <button type="button" class="btn btn-outline-danger" data-dismiss="modal">Close</button>
+              <button id="testbtn" type="button" class="btn btn-outline-info" onclick="fncAction1()" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order">Correct</button>
+            </div>
+          </div>
+          <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+      </div>
+      <!-- /.modal -->
 
     </section>
     <!-- /.content -->
+
+          <div class="modal fade" id="modal-delete">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h4 class="modal-title">Want to Delete Data ?</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                  <p>Are you sure you want to delete your Email Notification?</p>
+                </div>
+                <div class="modal-footer justify-content-between">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  <p id="btnDelete"></p>
+                </div>
+              </div>
+            </div>
+
   </div>
   <!-- /.content-wrapper -->
   <footer class="main-footer">
@@ -513,6 +588,8 @@ require_once "connect.php";
 <script src="plugins/summernote/summernote-bs4.min.js"></script>
 <!-- SweetAlert2 -->
 <script src="plugins/sweetalert2/sweetalert2.min.js"></script>
+<!-- Toastr -->
+<script src="plugins/toastr/toastr.min.js"></script>
 <!-- DataTables  & Plugins -->
 <script src="plugins/datatables/jquery.dataTables.min.js"></script>
 <script src="plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
@@ -533,7 +610,9 @@ require_once "connect.php";
 $(function () {
   bsCustomFileInput.init();
   //Initialize Select2 Elements
-    $('.select2').select2()
+    $('.select2').select2({
+      tags: true
+    })
 
   //Initialize Select2 Elements
     $('.select2bs4').select2({
@@ -541,7 +620,20 @@ $(function () {
     })
 
   // Summernote
-    $('#summernote').summernote()
+    $('#summernote').summernote({
+  toolbar: [
+    // [groupName, [list of button]]
+    ['style', ['bold', 'italic', 'underline', 'clear']],
+    ['font', ['strikethrough', 'superscript', 'subscript']],
+    ['fontname', ['fontname']],
+    ['fontsize', ['fontsize']],
+    ['color', ['color']],
+    ['para', ['ul', 'ol', 'paragraph']],
+    ['height', ['height']],
+    ['insert', ['link']],
+    ['view', ['fullscreen', 'codeview', 'help']]
+  ]
+})
   //bootstrap-switch
   $("input[data-bootstrap-switch]").each(function(){
       $(this).bootstrapSwitch('state', $(this).prop('checked'));
@@ -569,11 +661,24 @@ $(function () {
       setTimeout(() => {
         btn.removeAttr("disabled");
         btn.html(
-        'Test Send'
+        'Correct'
       );
       }, 8000)
     });
   });
+  
+  function addMailModel() {
+    var options = document.getElementById('mail_mailto').selectedOptions;
+    var optionsCC = document.getElementById('mail_mailcc').selectedOptions;
+    var optionsBCC = document.getElementById('mail_mailbcc').selectedOptions;
+    var values = Array.from(options).map(({ value }) => value);
+    var valuesCC = Array.from(optionsCC).map(({ value }) => value);
+    var valuesBCC = Array.from(optionsBCC).map(({ value }) => value);
+    console.log(values);
+    document.getElementById("demo").innerHTML = values;
+    document.getElementById("demoCC").innerHTML = valuesCC;
+    document.getElementById("demoBCC").innerHTML = valuesBCC;
+  }
 </script>
 <script>
   $(function () {
@@ -602,7 +707,7 @@ $(function () {
 <script type="text/javascript">
   $(function(){
     $('.example7').jqCron({
-        enabled_minute: true,
+        enabled_minute: false,
         multiple_dom: true,
         multiple_month: true,
         multiple_mins: true,
@@ -610,14 +715,14 @@ $(function () {
         multiple_time_hours: true,
         multiple_time_minutes: true,
         default_period: 'week',
-        default_value: '15 10-12 * * 1-5',
+        default_value: '0 10 * * *',
         bind_to: $('.example7-input'),
         bind_method: {
             set: function($element, value) {
                 $element.val(value);
             }
         },
-        no_reset_button: false,
+        no_reset_button: true,
         lang: 'en'
     });
 });
@@ -636,6 +741,11 @@ function setText(event) {
     $('#modal-default').modal('hide');
   }
 }
+$('#modal-delete').on('show.bs.modal', function (event) {
+  var myVal = $(event.relatedTarget).data('val');
+  var ahrefButton = '<a href="maildeleteonce?no='+myVal+'" type="button" class="btn btn-danger">Delete</a>'
+  document.getElementById('btnDelete').innerHTML += ahrefButton;
+});
 </script>
 </body>
 </html>

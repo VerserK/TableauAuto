@@ -5,10 +5,16 @@ require_once 'connect.php';
 
 $empid = $_SESSION['empid'];
 
-$lineenable = $_POST['line_enable'];
+if(isset($_POST['line_enable'])) {
+    // Set "activation_status" to 1.
+    $lineenable = "x";
+} else { 
+    // Set "activation_status" to 0.
+    $lineenable = "";
+}
 
 $linename = $_POST['line_name'];
-
+ 
 $lineviewid = $_POST['line_viewid'];
 
 $linetoken = $_POST['line_token'];

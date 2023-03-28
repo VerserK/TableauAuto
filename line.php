@@ -38,6 +38,8 @@ require_once "connect.php";
   <link rel="stylesheet" href="plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
   <!-- iCheck for checkboxes and radio inputs -->
   <link rel="stylesheet" href="plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+  <!-- dropzonejs -->
+  <link rel="stylesheet" href="plugins/dropzone/min/dropzone.min.css">
 </head>
 <body class="hold-transition sidebar-mini sidebar-open">
 <div class="wrapper">
@@ -196,7 +198,10 @@ require_once "connect.php";
           }else{
             document.addRow.action='testSendLine.php';
             document.addRow.target='iframe_target';
-            document.createElement('form').submit.call(document.addRow)
+            document.createElement('form').submit.call(document.addRow);
+            setTimeout(function() {
+                  $('#modal-check-test').modal('hide');
+              }, 8000);
           }
       }
       function fncAction2()
@@ -286,7 +291,7 @@ require_once "connect.php";
 
 
                       <div class="form-group">
-                        <label for="exampleInputBorder">ViewId</label>
+                        <label for="exampleInputBorder">Dashboard ID</label>
                         <input type="text" class="form-control form-control-border" id="line_viewid" name="line_viewid" autocomplete=off readonly>
                       </div>
 
@@ -331,7 +336,8 @@ require_once "connect.php";
                       
                     </div>
                     <div class="col-md-6 text-right">
-                      <button id="testbtn" type="button" class="btn btn-block btn-outline-warning" onclick="fncAction1()" >Test Send</button>
+                      <!--<button id="testbtn" type="button" class="btn btn-block btn-outline-warning" onclick="fncAction1()" >Test Send</button>-->
+                      <button id="testModel" type="button" class="btn btn-block btn-outline-warning" data-toggle="modal" data-target="#modal-check-test" onclick="addMailModel()">Preview and Sending</button>
                       <button type="button" class="btn btn-block btn-outline-success" onclick="fncAction2()">Submit</button>
                     </div>
                 </div>
@@ -347,6 +353,84 @@ require_once "connect.php";
         </div>
         <!-- /.row -->
       </div><!-- /.container-fluid -->
+        <!-- /.row dropzone -->
+        <div class="row">
+          <div class="col-md-12">
+            <div class="card card-default">
+              <div class="card-header">
+                <h3 class="card-title">Import <small><em>CSV File </em></small><a href="https://dwhwebstorage.blob.core.windows.net/test/Tableau Automation Management.csv" download>Link Download Template</a></h3>
+              </div>
+              <div class="card-body">
+                <div id="actions" class="row">
+                  <div class="col-lg-6">
+                    <div class="btn-group w-100">
+                      <span class="btn btn-success col fileinput-button">
+                        <i class="fas fa-plus"></i>
+                        <span>Add files</span>
+                      </span>
+                      <button type="submit" class="btn btn-primary col start">
+                        <i class="fas fa-upload"></i>
+                        <span>Start upload</span>
+                      </button>
+                      <button type="reset" class="btn btn-warning col cancel">
+                        <i class="fas fa-times-circle"></i>
+                        <span>Cancel upload</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-lg-6 d-flex align-items-center">
+                    <div class="fileupload-process w-100">
+                      <div id="total-progress" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div class="progress-bar progress-bar-success" style="width:0%;" data-dz-uploadprogress></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="table table-striped files" id="previews">
+                  <div id="template" class="row mt-2">
+                    <div class="col-auto">
+                        <span class="preview"><img src="data:," alt="" data-dz-thumbnail /></span>
+                    </div>
+                    <div class="col d-flex align-items-center">
+                        <p class="mb-0">
+                          <span class="lead" data-dz-name></span>
+                          (<span data-dz-size></span>)
+                        </p>
+                        <strong class="error text-danger" data-dz-errormessage></strong>
+                    </div>
+                    <div class="col-4 d-flex align-items-center">
+                        <div class="progress progress-striped active w-100" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                          <div class="progress-bar progress-bar-success" style="width:0%;" data-dz-uploadprogress></div>
+                        </div>
+                    </div>
+                    <div class="col-auto d-flex align-items-center">
+                      <div class="btn-group">
+                        <button class="btn btn-primary start">
+                          <i class="fas fa-upload"></i>
+                          <span>Start</span>
+                        </button>
+                        <button data-dz-remove class="btn btn-warning cancel">
+                          <i class="fas fa-times-circle"></i>
+                          <span>Cancel</span>
+                        </button>
+                        <button data-dz-remove class="btn btn-danger delete">
+                          <i class="fas fa-trash"></i>
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- /.card-body -->
+              <div class="card-footer">
+                Please enter the information according to the tamplate.
+              </div>
+            </div>
+            <!-- /.card -->
+          </div>
+        </div>
+        <!-- /.row -->
       </form><!-- /.form -->
 
       <div class="modal fade" id="modal-default">
@@ -369,7 +453,8 @@ require_once "connect.php";
                 </thead>
                 <tbody>
                   <?php
-                    $sqlapi = "SELECT * FROM idviewer";
+                    $sqlapi = "SELECT [workbook],[owner],[project],[tags],[location],[idviewer].[id],[idviewer].[name],[contentUrl],[createdAt],[updatedAt],[viewUrlName] 
+                    FROM idviewer INNER JOIN tableau_alluser ON idviewer.[owner] = tableau_alluser.id WHERE tableau_alluser.email ='$_SESSION[email]'";
                     $resultapi = sqlsrv_query($conn, $sqlapi);
                   echo '<tr>';
                   while ($rowapi = sqlsrv_fetch_array($resultapi, SQLSRV_FETCH_ASSOC)) {
@@ -392,6 +477,30 @@ require_once "connect.php";
             </div>
             <div class="modal-footer justify-content-between">
               <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+          <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+      </div>
+      <!-- /.modal -->
+      
+      <div class="modal fade" id="modal-check-test">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Verify that the recipient's token is correct?</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>token line :</p> 
+              <p id="demo"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+              <button type="button" class="btn btn-outline-danger" data-dismiss="modal">Close</button>
+              <button id="testbtn" type="button" class="btn btn-outline-info" onclick="fncAction1()" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order">Correct</button>
             </div>
           </div>
           <!-- /.modal-content -->
@@ -455,6 +564,8 @@ require_once "connect.php";
 <!-- jquery-validation -->
 <script src="plugins/jquery-validation/jquery.validate.min.js"></script>
 <script src="plugins/jquery-validation/additional-methods.min.js"></script>
+<!-- dropzonejs -->
+<script src="plugins/dropzone/min/dropzone.min.js"></script>
 <!-- Page specific script -->
 <script>
 $(function () {
@@ -491,7 +602,7 @@ $(document).ready(() => {
       setTimeout(() => {
         btn.removeAttr("disabled");
         btn.html(
-        'Test Send'
+        'Correct'
       );
       }, 8000)
     });
@@ -500,6 +611,11 @@ $(document).ready(() => {
   $(function () {
     $('[data-toggle="tooltip"]').tooltip()
   })
+  
+   function addMailModel() {
+    var options = document.getElementById('line_token').value;
+    document.getElementById("demo").innerHTML = options;
+  }
 </script>
 <script>
   $(function () {
@@ -536,14 +652,14 @@ $(document).ready(() => {
 <script type="text/javascript">
   $(function(){
     $('.example7').jqCron({
-        enabled_minute: true,
+        enabled_minute: false,
         multiple_dom: true,
         multiple_month: true,
         multiple_mins: true,
         multiple_dow: true,
         multiple_time_hours: true,
         multiple_time_minutes: true,
-        default_period: 'day',
+        default_period: 'week',
         default_value: '0 10 * * *',
         bind_to: $('.example7-input'),
         bind_method: {
@@ -551,7 +667,7 @@ $(document).ready(() => {
                 $element.val(value);
             }
         },
-        no_reset_button: false,
+        no_reset_button: true,
         lang: 'en'
     });
 });
@@ -570,6 +686,62 @@ function setText(event) {
     $('#modal-default').modal('hide');
   }
 }
+</script>
+<script>
+  // DropzoneJS Demo Code Start
+  Dropzone.autoDiscover = false
+
+  // Get the template HTML and remove it from the doumenthe template HTML and remove it from the doument
+  var previewNode = document.querySelector("#template")
+  previewNode.id = ""
+  var previewTemplate = previewNode.parentNode.innerHTML
+  previewNode.parentNode.removeChild(previewNode)
+
+  var myDropzone = new Dropzone(document.body, { // Make the whole body a dropzone
+    url: "/addline.php", // Set the url
+    thumbnailWidth: 80,
+    thumbnailHeight: 80,
+    parallelUploads: 20,
+    previewTemplate: previewTemplate,
+    autoQueue: false, // Make sure the files aren't queued until manually added
+    previewsContainer: "#previews", // Define the container to display the previews
+    clickable: ".fileinput-button", // Define the element that should be used as click trigger to select files.
+    acceptedFiles: 'text/csv',
+    maxFiles: 1
+  })
+
+  myDropzone.on("addedfile", function(file) {
+    // Hookup the start button
+    file.previewElement.querySelector(".start").onclick = function() { myDropzone.enqueueFile(file) }
+  })
+
+  // Update the total progress bar
+  myDropzone.on("totaluploadprogress", function(progress) {
+    document.querySelector("#total-progress .progress-bar").style.width = progress + "%"
+  })
+
+  myDropzone.on("sending", function(file) {
+    // Show the total progress bar when upload starts
+    document.querySelector("#total-progress").style.opacity = "1"
+    // And disable the start button
+    file.previewElement.querySelector(".start").setAttribute("disabled", "disabled")
+  })
+
+  // Hide the total progress bar when nothing's uploading anymore
+  myDropzone.on("queuecomplete", function(progress) {
+    document.querySelector("#total-progress").style.opacity = "0"
+  })
+
+  // Setup the buttons for all transfers
+  // The "add files" button doesn't need to be setup because the config
+  // `clickable` has already been specified.
+  document.querySelector("#actions .start").onclick = function() {
+    myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED))
+  }
+  document.querySelector("#actions .cancel").onclick = function() {
+    myDropzone.removeAllFiles(true)
+  }
+  // DropzoneJS Demo Code End
 </script>
 </body>
 </html>

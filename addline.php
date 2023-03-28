@@ -21,14 +21,32 @@ $linecorn = $_POST['line_corn'];
 
 $linemessage = $_POST['line_message'];
 
+if (!empty($_FILES)) {
+    $fileNull = "";
+    move_uploaded_file($_FILES["file"]["tmp_name"],$_FILES["file"]["name"]); // Copy/Upload CSV
+
+    $objCSV = fopen($_FILES["file"]["name"], "r");
+    while (($objArr = fgetcsv($objCSV, 1000, ",")) !== FALSE) {
+        $strSQL = "INSERT INTO linenoti ";
+        $strSQL .="([Enable],[Dashboardname],[ViewId],[Token],[FilterName],[FilterValue],[Time],[Message],[empid]) ";
+        $strSQL .="VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $params2 = array($objArr[0],$objArr[1],$objArr[2],$objArr[3],$objArr[4],$objArr[5],$objArr[6],$objArr[7],$objArr[8]);
+        $objQuery = sqlsrv_query($conn,$strSQL,$params2);
+    }
+    fclose($objCSV);
+}
+if (!empty($lineviewid)){
+    echo "else";
+    $sql = "INSERT INTO linenoti ([Dashboardname],[ViewId],[Token],[FilterName],[FilterValue],[Time],[Message],[empid],[Enable]) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $params = array($linename,$lineviewid,$linetoken,$linefiltername,$linefiltervalue,$linecorn,$linemessage,$empid,$lineenable);
+    $stmt = sqlsrv_query( $conn, $sql, $params);
+}
+
 $ip =  $_SERVER['REMOTE_ADDR'];
 $agent = $_SERVER['HTTP_USER_AGENT'];
 $session = session_id();
 $url = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 $actiontype = 'submit';
-
-$sql = "INSERT INTO linenoti ([Dashboardname],[ViewId],[Token],[FilterName],[FilterValue],[Time],[Message],[empid],[Enable]) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-$params = array($linename,$lineviewid,$linetoken,$linefiltername,$linefiltervalue,$linecorn,$linemessage,$empid,$lineenable);
 
 $sqlselect = "SELECT * FROM linenoti WHERE no = (SELECT max(no) FROM linenoti)";
 $queryselect = sqlsrv_query($conn , $sqlselect);
@@ -38,7 +56,6 @@ $sqllogs = "INSERT INTO logs_users_action ([action],[ip],[agent],[session],[url]
 $paramslogs = array($selectLOGS,$ip,$agent,$session,$url,$actiontype,date("Y-m-d H:i:s"),$empid);
 $stmtlogs = sqlsrv_query($conn, $sqllogs, $paramslogs);
 
-$stmt = sqlsrv_query( $conn, $sql, $params);
 if( $stmt === false ) {
     die( print_r( sqlsrv_errors(), true));
 }

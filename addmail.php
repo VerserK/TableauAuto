@@ -12,7 +12,8 @@ $empid = $_SESSION['empid'];
 //     // Set "activation_status" to 0.
 //     $enableX = "";
 // }
-
+$sqlCheck = "SELECT *FROM [dbo].[allemployee] WHERE ISNULL([email],'') != '' ORDER BY eid";
+$resultCheck = sqlsrv_query($conn, $sqlCheck);
 
     $mailRowz=$_POST['mail_rowz'];
     $mailEnablez=$_POST['mail_enablez'];
@@ -33,7 +34,7 @@ $empid = $_SESSION['empid'];
     foreach ($_POST['mail_mailcc'] as $mailcc)
         $mailcc_value.= $mailcc.",";    
     $mailcc_value =  rtrim($mailcc_value, ',');
-
+    
     foreach ($_POST['mail_mailbcc'] as $mailbcc)
         $mailbcc_value.= $mailbcc.",";    
     $mailbcc_value =  rtrim($mailbcc_value, ',');
@@ -45,43 +46,48 @@ $empid = $_SESSION['empid'];
         $save = "INSERT INTO mailnoti ([Enable],[MailGroup],[type],[ID],[ImageWidth],[filterName],[filterValue],[imageName],[CRON],[from],[to],[cc],[bcc],[Subject],[Content],[empid]) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $params = array($mailEnablez[$key],$mailGroupz[$key],$mailtypez[$key],$mailidz[$key],$mailimagewidthz[$key],$mailfilternamez[$key],$mailfiltervaluez[$key],$mailimagenamez[$key],$mailcornz[$key],$mailfrom,$mailto_value,$mailcc_value,$mailbcc_value,$mailsubject,$mailcontent,$empid);
         $stmt = sqlsrv_query( $conn, $save, $params);
+        
+        $mailto_value_r = (explode(",",$mailto_value));
+        foreach($mailto_value_r as $mailto_r){
+            if (strpos($mailto_r,'@kubota.com') !== false){
+
+            }else{
+                $saveMail = "INSERT INTO othermail ([mail],[no],[MailGroup],[created]) VALUES (?,(SELECT MAX(no) FROM mailnoti),?,?)";
+                $paramsMail = array($mailto_r,$mailGroupz[$key],date("Y-m-d H:i:s"));
+                $stmtmail = sqlsrv_query( $conn, $saveMail, $paramsMail);
+            }
+        }
+
+        $mailcc_value_r = (explode(",",$mailcc_value));
+        foreach($mailcc_value_r as $mailcc_r){
+            if (strpos($mailcc_r,'@kubota.com') !== false){
+                
+            }else{
+                if ($mailcc_value === ''){
+
+                }else{
+                $saveMail = "INSERT INTO othermailCC ([mail],[no],[MailGroup],[created]) VALUES (?,(SELECT MAX(no) FROM mailnoti),?,?)";
+                $paramsMail = array($mailcc_r,$mailGroupz[$key],date("Y-m-d H:i:s"));
+                $stmtmail = sqlsrv_query( $conn, $saveMail, $paramsMail);
+                }
+            }
+        }
+
+        $mailbcc_value_r = (explode(",",$mailbcc_value));
+        foreach($mailbcc_value_r as $mailbcc_r){
+            if (strpos($mailbcc_r,'@kubota.com') !== false){
+                
+            }else{
+                if ($mailbcc_value === ''){
+
+                }else{
+                $saveMail = "INSERT INTO othermailBCC ([mail],[no],[MailGroup],[created]) VALUES (?,(SELECT MAX(no) FROM mailnoti),?,?)";
+                $paramsMail = array($mailbcc_r,$mailGroupz[$key],date("Y-m-d H:i:s"));
+                $stmtmail = sqlsrv_query( $conn, $saveMail, $paramsMail);
+                }
+            }
+        }
     }
-    //sqlsrv_close($conn);
-
-
-// $mailgroup = $_POST['mail_mailgroup'];
-
-// $mailtype = $_POST['mail_type'];
-
-// $mailid = $_POST['mail_id'];
-
-// $mailimagewidth = $_POST['mail_imagewidth'];
-
-// $mailfiltername = $_POST['mail_filtername'];
-
-// $mailfiltervalue = $_POST['mail_filtervalue'];
-
-// $mailimagename = $_POST['mail_imagename'];
-
-// $mailcorn = $_POST['mail_corn'];
-
-// $mailfrom = $_POST['mail_from'];
-
-// foreach ($_POST['mail_mailto'] as $mailto)
-//     $mailto_value.= $mailto.",";
-// $mailto_value =  rtrim($mailto_value, ',');
-
-// foreach ($_POST['mail_mailcc'] as $mailcc)
-//     $mailcc_value.= $mailcc.",";    
-// $mailcc_value =  rtrim($mailcc_value, ',');
-
-// foreach ($_POST['mail_mailbcc'] as $mailbcc)
-//     $mailbcc_value.= $mailbcc.",";    
-// $mailbcc_value =  rtrim($mailbcc_value, ',');
-
-// $mailsubject = $_POST['mail_subject'];
-
-// $mailcontent=$_POST['summernotez'];
 
 $ip =  $_SERVER['REMOTE_ADDR'];
 $agent = $_SERVER['HTTP_USER_AGENT'];

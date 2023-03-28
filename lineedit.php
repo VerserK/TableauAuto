@@ -201,7 +201,10 @@ require_once "connect.php";
           }else{
             document.addRow.action='testSendLine.php';
             document.addRow.target='iframe_target';
-            document.createElement('form').submit.call(document.addRow)
+            document.createElement('form').submit.call(document.addRow);
+            setTimeout(function() {
+                  $('#modal-check-test').modal('hide');
+              }, 8000);
           }
       }
       function fncAction2()
@@ -289,7 +292,7 @@ require_once "connect.php";
                       </div>
 
                       <div class="form-group">
-                        <label for="exampleInputBorder">ViewId</label>
+                        <label for="exampleInputBorder">Dashboard ID</label>
                         <input type="text" class="form-control form-control-border" id="line_viewid" name="line_viewid" value="<?php echo $resultedit['ViewId']; ?>" autocomplete=off readonly>
                       </div>
 
@@ -334,7 +337,8 @@ require_once "connect.php";
                       
                     </div>
                     <div class="col-md-6 text-right">
-                      <button id="testbtn" type="button" class="btn btn-block btn-outline-warning" onclick="fncAction1()" >Test Send</button>
+                      <button id="testModel" type="button" class="btn btn-block btn-outline-warning" data-toggle="modal" data-target="#modal-check-test" onclick="addMailModel()">Preview and Sending</button>
+                      <!--<button id="testbtn" type="button" class="btn btn-block btn-outline-warning" onclick="fncAction1()" >Test Send</button>-->
                       <button type="button" class="btn btn-block btn-outline-primary" onclick="fncAction2()">Update</button>
                     </div>
                   </div>
@@ -372,13 +376,14 @@ require_once "connect.php";
                 </thead>
                 <tbody>
                   <?php
-                    $sqlapi = "SELECT * FROM idviewer";
+                    $sqlapi = "SELECT [workbook],[owner],[project],[tags],[location],[idviewer].[id],[idviewer].[name],[contentUrl],[createdAt],[updatedAt],[viewUrlName] 
+                    FROM idviewer INNER JOIN tableau_alluser ON idviewer.[owner] = tableau_alluser.id WHERE tableau_alluser.email ='$_SESSION[email]'";
                     $resultapi = sqlsrv_query($conn, $sqlapi);
                   echo '<tr>';
                   while ($rowapi = sqlsrv_fetch_array($resultapi, SQLSRV_FETCH_ASSOC)) {
                       // code...
-                    echo '<td><a href="javascript:void(0)" class="link" aria-controls="'.$rowapi["name"].'" onclick="getAttrs(event)">'.$rowapi["id"].'</a></td>';
-                    echo '<td>'.$rowapi["name"].'</td>';
+                    echo '<td><a href="javascript:void(0)" class="link" aria-controls="'.$rowapi["viewUrlName"].'" onclick="getAttrs(event)">'.$rowapi["id"].'</a></td>';
+                    echo '<td>'.$rowapi["viewUrlName"].'</td>';
                     echo '<td>'.$rowapi["contentUrl"].'</td>';
                   echo '</tr>';
                     }
@@ -395,6 +400,30 @@ require_once "connect.php";
             </div>
             <div class="modal-footer justify-content-between">
               <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+          <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+      </div>
+      <!-- /.modal -->
+      
+      <div class="modal fade" id="modal-check-test">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Verify that the recipient's token is correct?</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>token line :</p> 
+              <p id="demo"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+              <button type="button" class="btn btn-outline-danger" data-dismiss="modal">Close</button>
+              <button id="testbtn" type="button" class="btn btn-outline-info" onclick="fncAction1()" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order">Correct</button>
             </div>
           </div>
           <!-- /.modal-content -->
@@ -502,7 +531,7 @@ $(function () {
 <script type="text/javascript">
   $(function(){
     $('.example7').jqCron({
-        enabled_minute: true,
+        enabled_minute: false,
         multiple_dom: true,
         multiple_month: true,
         multiple_mins: true,
@@ -510,14 +539,14 @@ $(function () {
         multiple_time_hours: true,
         multiple_time_minutes: true,
         default_period: 'week',
-        default_value: '15 10-12 * * 1-5',
+        default_value: '0 10 * * *',
         bind_to: $('.example7-input'),
         bind_method: {
             set: function($element, value) {
                 $element.val(value);
             }
         },
-        no_reset_button: false,
+        no_reset_button: true,
         lang: 'en'
     });
 });
@@ -539,7 +568,7 @@ $(document).ready(() => {
       setTimeout(() => {
         btn.removeAttr("disabled");
         btn.html(
-        'Test Send'
+        'Correct'
       );
       }, 8000)
     });
@@ -548,6 +577,11 @@ $(document).ready(() => {
   $(function () {
     $('[data-toggle="tooltip"]').tooltip()
   })
+  
+   function addMailModel() {
+    var options = document.getElementById('line_token').value;
+    document.getElementById("demo").innerHTML = options;
+  }
 </script>
 <script type="text/javascript">
 function getAttrs(e) {

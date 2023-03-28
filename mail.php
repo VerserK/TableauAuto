@@ -196,7 +196,10 @@ require_once "connect.php";
             }else{
               document.addRow.action='testSend.php';
               document.addRow.target='iframe_target';
-              document.createElement('form').submit.call(document.addRow)
+              document.createElement('form').submit.call(document.addRow);
+              setTimeout(function() {
+                  $('#modal-check-test').modal('hide');
+              }, 8000);
             }
           }else if(document.getElementById("tbl").rows.length = 1){
             if (mail_id.value.length == 0){ 
@@ -285,10 +288,9 @@ require_once "connect.php";
                 <div class="row">
 
                   <div class="col-md-12">
-                  <p id="demo"></p>
                   <div class="card">
                     <div class="card-header">
-                      <h3 class="card-title">Add Data Table</h3>
+                      <h3 class="card-title">Dashboard List</h3>
                     </div>
                     <div class="card-body">
                       <table id="tbl" class="table table-sm">
@@ -298,7 +300,7 @@ require_once "connect.php";
                             <th>Enable</th>
                             <th>MailGroup</th>
                             <th>Type</th>
-                            <th>ID</th>
+                            <th>Dashboard ID</th>
                             <th>ImageWidth</th>
                             <th>filterName</th>
                             <th>filterValue</th>
@@ -330,6 +332,7 @@ require_once "connect.php";
                       $query = "SELECT MailGroup FROM [dbo].[mailnoti] ORDER BY MailGroup DESC";
                       $result = sqlsrv_query($conn,$query);
                       $row = sqlsrv_fetch_array($result);
+                      $SixDigitRandomNumber = rand(100000,999999);
                       $lastid = $row['MailGroup'];
                       if(empty($lastid))
                         {
@@ -339,7 +342,7 @@ require_once "connect.php";
                         {
                           $idd = str_replace("GM-", "", $lastid);
                           $id = str_pad($idd + 1, 7, 0, STR_PAD_LEFT);
-                          $number = 'GM-'.$id;
+                          $number = 'GM-'.$SixDigitRandomNumber;
                         }
                     ?>
 
@@ -357,7 +360,7 @@ require_once "connect.php";
                       </div>
 
                       <div class="form-group">
-                        <label for="exampleInputBorder">ID</label>
+                        <label for="exampleInputBorder">Dashboard ID</label>
                         <a href="#" class="btn btn-block btn-outline-info" data-toggle="modal" data-target="#modal-default">ID Viewer</a>
                         <input type="text" class="form-control form-control-border" id="mail_id" name="mail_id" autocomplete=off>
                       </div>
@@ -417,7 +420,7 @@ require_once "connect.php";
                             <option value="<?php echo $row1["email"]; ?>"><?php echo $row1["nameEN"]. " " . $row1["lastnameEN"]; ?></option>
                           <?php } ?>
                           </select>
-                        </div>  
+                        </div>
                       </div>
 
                       <div class="form-group">
@@ -471,13 +474,17 @@ require_once "connect.php";
                             <textarea id="summernote" name="summernotez"></textarea>
                         </div>
                         <!-- /.card-header -->
+                        <div class="col-md-6">
+                          <input type="button" id="addPicture" name="addPicture" value="Add Picture" onclick="addPic()" class="btn btn-block btn-outline-info">
+                        </div>
 
                   </div>
                     <div class="col-md-6">
                       
                     </div>
                     <div class="col-md-6 text-right">
-                      <button id="testbtn" type="button" class="btn btn-block btn-outline-warning" onclick="fncAction1()" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order">Test Send</button>
+                      <!--<button id="testbtn" type="button" class="btn btn-block btn-outline-warning" onclick="fncAction1()" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order">Test Send</button>-->
+                      <button id="testModel" type="button" class="btn btn-block btn-outline-warning" data-toggle="modal" data-target="#modal-check-test" onclick="addMailModel()">Preview and Sending</button>
                       <button type="button" class="btn btn-block btn-outline-success" onclick="fncAction2()">Submit</button>
                     </div>
                 </div>
@@ -515,7 +522,8 @@ require_once "connect.php";
                 </thead>
                 <tbody>
                   <?php
-                    $sqlapi = "SELECT * FROM idviewer";
+                    $sqlapi = "SELECT [workbook],[owner],[project],[tags],[location],[idviewer].[id],[idviewer].[name],[contentUrl],[createdAt],[updatedAt],[viewUrlName] 
+                    FROM idviewer INNER JOIN tableau_alluser ON idviewer.[owner] = tableau_alluser.id WHERE tableau_alluser.email ='$_SESSION[email]'";
                     $resultapi = sqlsrv_query($conn, $sqlapi);
                   echo '<tr>';
                   while ($rowapi = sqlsrv_fetch_array($resultapi, SQLSRV_FETCH_ASSOC)) {
@@ -529,7 +537,7 @@ require_once "connect.php";
                 </tbody>
                 <thead>
                   <tr>
-                    <th>ID</th>
+                    <th>Dashboard ID</th>
                     <th>Dashboard Name</th>
                     <th>ContentUrl</th>
                   </tr>
@@ -538,6 +546,34 @@ require_once "connect.php";
             </div>
             <div class="modal-footer justify-content-between">
               <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+          <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+      </div>
+      <!-- /.modal -->
+      
+      <div class="modal fade" id="modal-check-test">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Verify that the recipient's name is correct?</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>to :</p> 
+              <p id="demo"></p>
+              <p>CC :</p> 
+              <p id="demoCC"></p>
+              <p>BCC :</p> 
+              <p id="demoBCC"></p>
+            </div>
+            <div class="modal-footer justify-content-between">
+              <button type="button" class="btn btn-outline-danger" data-dismiss="modal">Close</button>
+              <button id="testbtn" type="button" class="btn btn-outline-info" onclick="fncAction1()" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order">Correct</button>
             </div>
           </div>
           <!-- /.modal-content -->
@@ -603,7 +639,9 @@ require_once "connect.php";
 $(function () {
   bsCustomFileInput.init();
   //Initialize Select2 Elements
-    $('.select2').select2()
+    $('.select2').select2({
+      tags: true
+    })
 
   //Initialize Select2 Elements
     $('.select2bs4').select2({
@@ -622,8 +660,13 @@ $(function () {
     ['para', ['ul', 'ol', 'paragraph']],
     ['height', ['height']],
     ['insert', ['link']],
-    ['view', ['fullscreen', 'codeview', 'help']]
-  ]
+    ['view', ['fullscreen', 'codeview', 'help']],
+    ['mybutton', ['hello']]
+  ],
+
+  buttons: {
+    hello: HelloButton
+  }
 })
   //bootstrap-switch
     $("input[data-bootstrap-switch]").each(function(){
@@ -663,7 +706,7 @@ $(function () {
       setTimeout(() => {
         btn.removeAttr("disabled");
         btn.html(
-        'Test Send'
+        'Correct'
       );
       }, 8000)
     });
@@ -672,7 +715,44 @@ $(function () {
   $(function () {
     $('[data-toggle="tooltip"]').tooltip()
   })
+
+  function addPic(){
+    var rowCount = $("#tbl tr").length;
+    var alltext = '';
+    for (let i = 1; i < rowCount; i++){
+      var tables = document.getElementById("tbl").rows[i].cells[8].textContent;
+      alltext += '(nl)(im=' + tables + '.jpeg)(nl)<br>';
+      $("#summernote").summernote('code', alltext);
+    }
+  }
+  function addMailModel() {
+    var options = document.getElementById('mail_mailto').selectedOptions;
+    var optionsCC = document.getElementById('mail_mailcc').selectedOptions;
+    var optionsBCC = document.getElementById('mail_mailbcc').selectedOptions;
+    var values = Array.from(options).map(({ value }) => value);
+    var valuesCC = Array.from(optionsCC).map(({ value }) => value);
+    var valuesBCC = Array.from(optionsBCC).map(({ value }) => value);
+    console.log(values);
+    document.getElementById("demo").innerHTML = values;
+    document.getElementById("demoCC").innerHTML = valuesCC;
+    document.getElementById("demoBCC").innerHTML = valuesBCC;
+  }
   
+  var HelloButton = function (context) {
+  var ui = $.summernote.ui;
+
+  // create button
+  var button = ui.button({
+    contents: '<i class="fa fa-child"/> Hello',
+    tooltip: 'hello',
+    click: function () {
+      // invoke insertText method with 'hello' on editor module.
+      context.invoke('editor.insertText', 'hello');
+    }
+  });
+
+  return button.render();   // return button as jquery object
+}
 </script>
 <script>
   $(function () {
@@ -694,7 +774,7 @@ $(function () {
 <script type="text/javascript">
   $(function(){
     $('.example7').jqCron({
-        enabled_minute: true,
+        enabled_minute: false,
         multiple_dom: true,
         multiple_month: true,
         multiple_mins: true,
@@ -709,7 +789,7 @@ $(function () {
                 $element.val(value);
             }
         },
-        no_reset_button: false,
+        no_reset_button: true,
         lang: 'en'
     });
 });
@@ -785,7 +865,6 @@ function setText(event) {
     var d = dRow.parentNode.parentNode;
     d.parentNode.removeChild(d);
   }
-
 </script>
 </body>
 </html>

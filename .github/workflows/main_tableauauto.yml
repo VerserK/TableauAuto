@@ -56,5 +56,5 @@ jobs:
         with:
           app-name: 'tableauauto'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2EDC24085EB342FFA335477ADA545981 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E2FB38307AEA4D68860EBBA992854EA9 }}
           package: .

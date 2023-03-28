@@ -72,6 +72,8 @@ curl_setopt ($ch, CURLOPT_HTTPHEADER, array ('Authorization: Bearer '.$t,
 
 curl_setopt ($ch, CURLOPT_URL, "https://graph.microsoft.com/v1.0/me?\$select=id,employeeId,displayName,givenName,surname,department,mail,userPrincipalName");
 
+// curl_setopt ($ch, CURLOPT_URL, "https://graph.microsoft.com/v1.0/me");
+
 curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
 
 $rez = json_decode (curl_exec ($ch), 1);
@@ -91,6 +93,8 @@ $_SESSION['msatg'] = 1;  //auth and verified
 $_SESSION['uname'] = $rez["displayName"];
 
 $_SESSION['mail'] = $rez["userPrincipalName"];
+
+$_SESSION['email'] = $rez["mail"];
 
 $_SESSION['empid'] = $rez["employeeId"];
 

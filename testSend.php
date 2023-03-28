@@ -1,4 +1,5 @@
 <?php
+
 session_start ();
 
 require_once 'connect.php';
@@ -78,7 +79,7 @@ require_once 'connect.php';
     $associativeArray = json_decode($json_data, true);
     $queryString = http_build_query($associativeArray);
     $query = preg_replace('/\%5B\d+\%5D/', '', $queryString);
-    echo $query;
+    // echo $query;
 
     // create a new cURL resource
     $endpoint = 'https://tableau-function-test.azurewebsites.net/api/HttpTrigger1?';
